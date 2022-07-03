@@ -13,21 +13,7 @@ router.get('/', async (req, res) => {
   // }
   try {
     const productData = await Product.findAll({
-      include: [{ model: Category}], 
-//      include: [{ model: Category},{ model: Tag,through: ProductTag}], 
-
-      // attributes: {
-      //   include: [
-      //     [
-      //       sequelize.literal(
-      //         `(SELECT product_tag.product_id,category.category_name
-      //           FROM product
-      //           JOIN category ON product.category_id = category.id
-      //           JOIN product_tag ON product.id = product_tag.product_id;)`
-      //       )
-      //     ],
-      //   ],
-      // },
+      include: [Category,{model: Tag,through:ProductTag}], 
     });
     res.status(200).json(productData);
   } catch (err) {
@@ -36,9 +22,21 @@ router.get('/', async (req, res) => {
 });
 
 // get one product
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   // find a single product by its `id`
   // be sure to include its associated Category and Tag data
+  try {
+    const productData = await Product.findByPk(req.params.id , {
+      include: [Category,{model: Tag,through:ProductTag}], 
+    });
+    if(!productData){
+      res.status(404).json({message: 'No Product found with this ID!'});
+      return;
+    }
+    res.status(200).json(productData);
+  }catch(err){
+    res.status(500).json(err);
+  }
 });
 
 // create new product
@@ -115,8 +113,24 @@ router.put('/:id', (req, res) => {
     });
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id',async (req, res) => {
   // delete one product by its `id` value
+  try {
+    const ProductData = await Product.destroy({
+      where: {
+        id: req.params.id
+      }
+    });
+
+    if (!ProductData) {
+      res.status(404).json({ message: 'No Product found with this id!' });
+      return;
+    }
+
+    res.status(200).json(ProductData);
+  } catch (err) {
+    res.status(500).json(err);
+  }
 });
 
 module.exports = router;
